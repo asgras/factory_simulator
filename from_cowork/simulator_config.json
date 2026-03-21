@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "exportedAt": "2026-03-21T00:42:47.589Z",
+  "factory": {
+    "totalSqft": 54000,
+    "totalLabor": 107
+  },
+  "workcells": [
+    {
+      "id": 1,
+      "name": "Framing",
+      "inputType": "cut_lumber_kit,cut_sheets",
+      "outputType": "framed_panels",
+      "outputRate": 1,
+      "laborRequired": 2,
+      "sqft": 600
+    },
+    {
+      "id": 2,
+      "name": "Panel Matrix",
+      "inputType": "framed_panels",
+      "outputType": "roughed_panels",
+      "outputRate": 4,
+      "laborRequired": 2,
+      "sqft": 400
+    },
+    {
+      "id": 5,
+      "name": "Integration",
+      "inputType": "roughed_panels:40,floor_cassettes",
+      "outputType": "assembled_modules",
+      "outputRate": 0.05,
+      "laborRequired": 2,
+      "sqft": 1000
+    },
+    {
+      "id": 6,
+      "name": "Finishing",
+      "inputType": "assembled_modules",
+      "outputType": "finished_module",
+      "outputRate": 0.0125,
+      "laborRequired": 3,
+      "sqft": 1000
+    },
+    {
+      "id": 7,
+      "name": "Floor Cassette Bay",
+      "inputType": "floor_materials",
+      "outputType": "floor_cassettes",
+      "outputRate": 0.1,
+      "laborRequired": 2,
+      "sqft": 1000
+    },
+    {
+      "id": 8,
+      "name": "Saw",
+      "inputType": "raw_lumber",
+      "outputType": "cut_lumber_kit",
+      "outputRate": 5,
+      "laborRequired": 1,
+      "sqft": 500
+    },
+    {
+      "id": 9,
+      "name": "CNC",
+      "inputType": "raw_sheets",
+      "outputType": "cut_sheets",
+      "outputRate": 5,
+      "laborRequired": 1,
+      "sqft": 300
+    },
+    {
+      "id": 10,
+      "name": "Storage",
+      "inputType": "delivery",
+      "outputType": "raw_lumber",
+      "outputRate": 100,
+      "laborRequired": 1,
+      "sqft": 4001
+    }
+  ]
+}
