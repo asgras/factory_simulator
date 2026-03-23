@@ -965,97 +965,101 @@ def main():
         with s_col3:
             sweep_steps = st.number_input("Steps", value=20, min_value=5, max_value=50, step=5, key="sweep_steps")
 
-        if st.button("Run Sweep", type="primary"):
-            import copy
-            step_size = max(1, int((sweep_max - sweep_min) / sweep_steps))
-            sqft_values = list(range(int(sweep_min), int(sweep_max) + 1, step_size))
+        st.button("Run Sweep", type="primary")
 
-            sweep_throughput = []
-            sweep_labor = []
-            sweep_bottleneck = []
-            sweep_allocations = []
-            progress = st.progress(0, text="Running sweep...")
+        import copy
+        step_size = max(1, int((sweep_max - sweep_min) / sweep_steps))
+        sqft_values = list(range(int(sweep_min), int(sweep_max) + 1, step_size))
 
-            for idx, sqft in enumerate(sqft_values):
-                # Re-resolve percentage-based workcells for each factory size
-                sweep_wc = copy.deepcopy(workcells)
-                for w in sweep_wc:
-                    if w.get("sqftMode") == "%":
-                        w["sqft"] = max(1, int(sqft * w.get("sqftValue", 0) / 100))
-                sweep_factory = {**factory, "totalSqft": sqft, "totalLabor": 99999}
-                r = solve_factory(sweep_wc, sweep_factory)
-                sqft_per_unit = factory.get("sqftPerUnit", 0)
-                sweep_throughput.append(r.throughput * 5 * sqft_per_unit)
-                sweep_labor.append(r.total_labor)
-                sweep_bottleneck.append(r.bottleneck)
-                # Store production cell allocations (skip overhead)
-                sweep_allocations.append({
-                    a.name: a.count for a in r.allocation
-                    if a.count > 0 and a.output_type  # exclude overhead (empty output_type)
-                })
-                progress.progress((idx + 1) / len(sqft_values), text=f"Solving {sqft:,} sqft...")
+        sweep_throughput = []
+        sweep_labor = []
+        sweep_bottleneck = []
+        sweep_allocations = []
 
-            progress.empty()
+        for idx, sqft in enumerate(sqft_values):
+            # Re-resolve percentage-based workcells for each factory size
+            sweep_wc = copy.deepcopy(workcells)
+            for w in sweep_wc:
+                if w.get("sqftMode") == "%":
+                    w["sqft"] = max(1, int(sqft * w.get("sqftValue", 0) / 100))
+            sweep_factory = {**factory, "totalSqft": sqft, "totalLabor": 99999}
+            r = solve_factory(sweep_wc, sweep_factory)
+            sqft_per_unit = factory.get("sqftPerUnit", 0)
+            sweep_throughput.append(r.throughput * 5 * sqft_per_unit)
+            sweep_labor.append(r.total_labor)
+            sweep_bottleneck.append(r.bottleneck)
+            # Store production cell allocations (skip overhead)
+            sweep_allocations.append({
+                a.name: a.count for a in r.allocation
+                if a.count > 0 and a.output_type  # exclude overhead (empty output_type)
+            })
 
-            # Dual-axis chart: throughput on left Y, labor on right Y
-            from plotly.subplots import make_subplots
-            fig = make_subplots(specs=[[{"secondary_y": True}]])
+        # Dual-axis chart: throughput on left Y, labor on right Y
+        from plotly.subplots import make_subplots
+        fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-            fig.add_trace(
-                go_sweep.Scatter(
-                    x=sqft_values, y=sweep_throughput, name="Throughput (sqft/week)",
-                    mode="lines+markers", line=dict(color="#2563eb", width=2),
-                    hovertemplate="%{x:,.0f} sqft factory<br>%{y:,.0f} sqft/week<extra></extra>",
-                ),
-                secondary_y=False,
-            )
-            fig.add_trace(
-                go_sweep.Scatter(
-                    x=sqft_values, y=sweep_labor, name="Labor Used (workers)",
-                    mode="lines+markers", line=dict(color="#dc2626", width=2, dash="dash"),
-                    hovertemplate="%{x:,.0f} sqft<br>%{y} workers<extra></extra>",
-                ),
-                secondary_y=True,
-            )
+        fig.add_trace(
+            go_sweep.Scatter(
+                x=sqft_values, y=sweep_throughput, name="Throughput (sqft/week)",
+                mode="lines+markers", line=dict(color="#2563eb", width=2),
+                hovertemplate="%{x:,.0f} sqft factory<br>%{y:,.0f} sqft/week<extra></extra>",
+            ),
+            secondary_y=False,
+        )
+        fig.add_trace(
+            go_sweep.Scatter(
+                x=sqft_values, y=sweep_labor, name="Labor Used (workers)",
+                mode="lines+markers", line=dict(color="#dc2626", width=2, dash="dash"),
+                hovertemplate="%{x:,.0f} sqft<br>%{y} workers<extra></extra>",
+            ),
+            secondary_y=True,
+        )
 
-            # Mark current factory size
-            fig.add_vline(x=factory["totalSqft"], line_dash="dot", line_color="#6b7280",
-                          annotation_text=f"Current ({factory['totalSqft']:,})")
+        # Finishing bays count across the sweep
+        sweep_finishing = [alloc.get("Finishing", 0) for alloc in sweep_allocations]
+        fig.add_trace(
+            go_sweep.Scatter(
+                x=sqft_values, y=sweep_finishing, name="Finishing Bays",
+                mode="lines+markers", line=dict(color="#16a34a", width=2, dash="dot"),
+                hovertemplate="%{x:,.0f} sqft<br>%{y} finishing bays<extra></extra>",
+            ),
+            secondary_y=True,
+        )
 
-            fig.update_xaxes(title_text="Factory Floor Area (sqft)", tickformat=",")
-            fig.update_yaxes(title_text="Throughput (sqft/week)", secondary_y=False, color="#2563eb")
-            fig.update_yaxes(title_text="Labor Used (workers)", secondary_y=True, color="#dc2626")
-            fig.update_layout(
-                height=500, margin=dict(t=30, l=10, r=10, b=10),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                hovermode="x unified",
-            )
-            st.plotly_chart(fig, use_container_width=True)
+        fig.update_xaxes(title_text="Factory Floor Area (sqft)", tickformat=",")
+        fig.update_yaxes(title_text="Throughput (sqft/week)", secondary_y=False, color="#2563eb")
+        fig.update_yaxes(title_text="Team Size<br>Finishing Bay Count", secondary_y=True, color="#dc2626")
+        fig.update_layout(
+            height=500, margin=dict(t=30, l=10, r=10, b=10),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+            hovermode="x unified",
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
-            # Allocation table across sweep points
-            st.subheader("Workcell Allocation by Factory Size")
-            # Collect all production workcell names across all sweep points
-            all_names = []
-            seen = set()
-            for alloc in sweep_allocations:
-                for name in alloc:
-                    if name not in seen:
-                        all_names.append(name)
-                        seen.add(name)
+        # Allocation table across sweep points
+        st.subheader("Workcell Allocation by Factory Size")
+        # Collect all production workcell names across all sweep points
+        all_names = []
+        seen = set()
+        for alloc in sweep_allocations:
+            for name in alloc:
+                if name not in seen:
+                    all_names.append(name)
+                    seen.add(name)
 
-            import pandas as pd
-            table_rows = []
-            for i, sqft in enumerate(sqft_values):
-                row = {"Factory (sqft)": f"{sqft:,}",
-                       "Throughput (sqft/wk)": f"{sweep_throughput[i]:,.0f}",
-                       "Labor": sweep_labor[i],
-                       "Bottleneck": sweep_bottleneck[i]}
-                for name in all_names:
-                    row[name] = sweep_allocations[i].get(name, 0)
-                table_rows.append(row)
+        import pandas as pd
+        table_rows = []
+        for i, sqft in enumerate(sqft_values):
+            row = {"Factory (sqft)": f"{sqft:,}",
+                   "Throughput (sqft/wk)": f"{sweep_throughput[i]:,.0f}",
+                   "Labor": sweep_labor[i],
+                   "Bottleneck": sweep_bottleneck[i]}
+            for name in all_names:
+                row[name] = sweep_allocations[i].get(name, 0)
+            table_rows.append(row)
 
-            df_sweep = pd.DataFrame(table_rows)
-            st.dataframe(df_sweep, use_container_width=True, hide_index=True)
+        df_sweep = pd.DataFrame(table_rows)
+        st.dataframe(df_sweep, use_container_width=True, hide_index=True)
 
 
 if __name__ == "__main__":
