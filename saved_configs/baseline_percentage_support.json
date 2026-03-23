@@ -1,7 +1,7 @@
 {
   "version": 2,
   "factory": {
-    "totalSqft": 85000,
+    "totalSqft": 74500,
     "totalLabor": 107,
     "sqftPerUnit": 700,
     "hoursPerWeek": 40
@@ -87,19 +87,19 @@
     {
       "id": 10,
       "name": "Storage",
-      "inputType": "",
-      "outputType": "",
+      "inputType": "delivery",
+      "outputType": "raw_lumber",
       "outputRate": 100.0,
       "laborRequired": 1,
-      "sqft": 7450,
+      "sqft": 18625,
       "sqftMode": "%",
-      "sqftValue": 10.0
+      "sqftValue": 25.0
     },
     {
       "id": 11,
       "name": "Exit Lane",
-      "inputType": "",
-      "outputType": "",
+      "inputType": "finished_module",
+      "outputType": "exited_module",
       "outputRate": 10.0,
       "laborRequired": 1,
       "sqft": 3725,

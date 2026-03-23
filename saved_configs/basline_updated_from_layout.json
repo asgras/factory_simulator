@@ -1,7 +1,7 @@
 {
   "version": 2,
   "factory": {
-    "totalSqft": 85000,
+    "totalSqft": 54000,
     "totalLabor": 107,
     "sqftPerUnit": 700,
     "hoursPerWeek": 40
@@ -14,9 +14,7 @@
       "outputType": "framed_panels",
       "outputRate": 10.0,
       "laborRequired": 2,
-      "sqft": 1050,
-      "sqftMode": "fixed",
-      "sqftValue": 1050.0
+      "sqft": 1050
     },
     {
       "id": 2,
@@ -25,9 +23,7 @@
       "outputType": "roughed_panels",
       "outputRate": 40.0,
       "laborRequired": 2,
-      "sqft": 5600,
-      "sqftMode": "fixed",
-      "sqftValue": 5600.0
+      "sqft": 5600
     },
     {
       "id": 5,
@@ -36,9 +32,7 @@
       "outputType": "assembled_modules",
       "outputRate": 0.5,
       "laborRequired": 2,
-      "sqft": 1600,
-      "sqftMode": "fixed",
-      "sqftValue": 1600.0
+      "sqft": 1600
     },
     {
       "id": 6,
@@ -47,9 +41,7 @@
       "outputType": "finished_module",
       "outputRate": 0.1,
       "laborRequired": 3,
-      "sqft": 1600,
-      "sqftMode": "fixed",
-      "sqftValue": 1600.0
+      "sqft": 1600
     },
     {
       "id": 7,
@@ -58,9 +50,7 @@
       "outputType": "floor_cassettes",
       "outputRate": 0.5,
       "laborRequired": 2,
-      "sqft": 1600,
-      "sqftMode": "fixed",
-      "sqftValue": 1600.0
+      "sqft": 1600
     },
     {
       "id": 8,
@@ -69,9 +59,7 @@
       "outputType": "cut_lumber",
       "outputRate": 50.0,
       "laborRequired": 1,
-      "sqft": 1900,
-      "sqftMode": "fixed",
-      "sqftValue": 1900.0
+      "sqft": 1900
     },
     {
       "id": 9,
@@ -80,53 +68,16 @@
       "outputType": "cut_sheets",
       "outputRate": 50.0,
       "laborRequired": 1,
-      "sqft": 1600,
-      "sqftMode": "fixed",
-      "sqftValue": 1600.0
+      "sqft": 1600
     },
     {
       "id": 10,
       "name": "Storage",
-      "inputType": "",
-      "outputType": "",
+      "inputType": "delivery",
+      "outputType": "raw_lumber",
       "outputRate": 100.0,
       "laborRequired": 1,
-      "sqft": 7450,
-      "sqftMode": "%",
-      "sqftValue": 10.0
-    },
-    {
-      "id": 11,
-      "name": "Exit Lane",
-      "inputType": "",
-      "outputType": "",
-      "outputRate": 10.0,
-      "laborRequired": 1,
-      "sqft": 3725,
-      "sqftMode": "%",
-      "sqftValue": 5.0
-    },
-    {
-      "id": 21,
-      "name": "Travel Lanes",
-      "inputType": "",
-      "outputType": "",
-      "outputRate": 1.0,
-      "laborRequired": 1,
-      "sqft": 16390,
-      "sqftMode": "%",
-      "sqftValue": 22.0
-    },
-    {
-      "id": 32,
-      "name": "Overhead area (desks, lockers)",
-      "inputType": "",
-      "outputType": "",
-      "outputRate": 1.0,
-      "laborRequired": 1,
-      "sqft": 500,
-      "sqftMode": "fixed",
-      "sqftValue": 500.0
+      "sqft": 4001
     }
   ]
 }
