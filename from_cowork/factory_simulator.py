@@ -238,18 +238,49 @@ def solve_factory(workcells: list[dict], factory: dict) -> SolverResult:
 
     allocation = [1 if i in required else 0 for i in range(len(cells))]
 
-    # Check if minimum allocation fits
-    min_sqft = sum(allocation[i] * cells[i]["sqft"] for i in range(len(cells)))
-    min_labor = sum(allocation[i] * cells[i]["laborRequired"] for i in range(len(cells)))
-    if min_sqft > factory["totalSqft"] or min_labor > factory["totalLabor"]:
+    # Check if minimum allocation fits (report totals including overhead)
+    min_prod_sqft = sum(allocation[i] * cells[i]["sqft"] for i in range(len(cells)))
+    min_prod_labor = sum(allocation[i] * cells[i]["laborRequired"] for i in range(len(cells)))
+    if min_prod_sqft > factory["totalSqft"] or min_prod_labor > factory["totalLabor"]:
+        # Compute true minimum factory size accounting for %-based overhead.
+        # If overhead takes P% of factory and F_fixed sqft fixed, production needs X sqft:
+        #   factory_min * (1 - P/100) - F_fixed = X  =>  factory_min = (X + F_fixed) / (1 - P/100)
+        overhead_pct = sum(c.get("sqftValue", 0) for c in overhead if c.get("sqftMode") == "%")
+        fixed_overhead_sqft = sum(c["sqft"] for c in overhead if c.get("sqftMode") != "%")
+        if overhead_pct < 100:
+            total_min_sqft = math.ceil((min_prod_sqft + fixed_overhead_sqft) / (1 - overhead_pct / 100))
+        else:
+            total_min_sqft = min_prod_sqft + overhead_sqft  # fallback if 100% overhead (broken config)
+        total_min_labor = min_prod_labor + overhead_labor
+
+        # Resolve what overhead sqft would be at the minimum factory size
+        min_overhead_sqft = 0
+        for c in overhead:
+            if c.get("sqftMode") == "%":
+                min_overhead_sqft += max(1, int(total_min_sqft * c.get("sqftValue", 0) / 100))
+            else:
+                min_overhead_sqft += c["sqft"]
+
+        alloc_results = [WorkcellAllocation(
+            name=c["name"], output_type=c["outputType"], input_type=c["inputType"],
+            output_rate=c["outputRate"], labor_required=c["laborRequired"], sqft=c["sqft"],
+            count=allocation[i], total_capacity=0, effective_rate=0, demand_mult=0, utilization=0,
+        ) for i, c in enumerate(cells)]
+        for c in overhead:
+            alloc_results.append(WorkcellAllocation(
+                name=c["name"], output_type="", input_type="", output_rate=0,
+                labor_required=c["laborRequired"], sqft=c["sqft"],
+                count=1, total_capacity=0, effective_rate=0, demand_mult=0, utilization=0,
+            ))
+        parts = []
+        if min_prod_sqft > factory["totalSqft"]:
+            parts.append(f"{total_min_sqft:,} sqft (production: {min_prod_sqft:,} + overhead: {min_overhead_sqft:,})")
+        if min_prod_labor > factory["totalLabor"]:
+            parts.append(f"{total_min_labor} workers (production: {min_prod_labor} + overhead: {overhead_labor})")
         return SolverResult(
-            allocation=[WorkcellAllocation(
-                name=c["name"], output_type=c["outputType"], input_type=c["inputType"],
-                output_rate=c["outputRate"], labor_required=c["laborRequired"], sqft=c["sqft"],
-                count=allocation[i], total_capacity=0, effective_rate=0, demand_mult=0, utilization=0,
-            ) for i, c in enumerate(cells)],
-            throughput=0, bottleneck="None", total_sqft=min_sqft, total_labor=min_labor,
-            messages=[f"Factory too small or insufficient labor. Need at least {min_sqft} sqft and {min_labor} workers."],
+            allocation=alloc_results,
+            throughput=0, bottleneck="None", total_sqft=total_min_sqft, total_labor=total_min_labor,
+            messages=[f"Factory too small. Need at least {' and '.join(parts)}."],
             weekly_sqft=0, final_types=final_types, raw_types=raw_types,
         )
 
@@ -689,6 +720,7 @@ def main():
                 "sqftValue": raw_val,
             })
         st.session_state.workcells = new_workcells
+        st.rerun()
 
     workcells = st.session_state.workcells
 
